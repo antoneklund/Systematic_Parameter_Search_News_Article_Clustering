@@ -1,0 +1,39 @@
+#Project specific
+doc2vec/data
+.stuff
+text_preprocessing/lemmatag/.summaries
+*.pkl
+*.json
+*.ml
+*.vectors_docs.npy
+/n_dim
+*.csv
+*.png
+*.bertopic
+/bert_output/
+/models/
+*.torch
+/figures/
+*.sh~
+*.out
+*.tsv
+/datasets
+
+# Pycaches/ mypy caches
+__pycache__/
+tfidf_experimental/__pycache__
+test/__pycache__
+keyword_extraction/__pycache__
+keyword_extraction/utilities/__pycache__
+keyword_extraction/experiments/__pycache__/
+sv_lemma_stemma_pipeline/__pycache__/
+utilities/__pycache__/
+.mypy_cache
+#Virtual env
+.venv
+tf2_env
+
+#IDEs/Editors
+.idea
+.vscode
+doc2vec/models

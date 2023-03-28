@@ -1,0 +1,10 @@
+pandas
+nltk
+gensim
+scikit-learn
+transformers
+torch
+umap-learn
+matplotlib
+seaborn
+hdbscan
