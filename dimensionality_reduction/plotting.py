@@ -1082,6 +1082,7 @@ def main():
     #     "scores/scores_d2v_r_230111_pca.pkl",
     # ]
     # plot_dim_reduction_time(umap_paths, pca_paths)
+    pass 
 
 
 if __name__ == "__main__":
