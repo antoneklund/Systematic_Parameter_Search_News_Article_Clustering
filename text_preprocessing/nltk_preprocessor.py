@@ -104,14 +104,13 @@ class NltkPreprocessor:
                                        and digits.
             remove_stopwords: If to remove stop words.
         """
-        LOGGER.info("Removing stopwords, special, digits, punctuation "
-                     "and perform lemmatizing.")
+        LOGGER.info("Preprocessing. Might take a while.")
         start = datetime.datetime.now()
         lemmatizer = NltkLemmatizerEn()
         stemmer = NltkStemmer()
 
         if remove_stopwords:
-            extended_stopwords = ["said", "say", "mr", "would"]
+            extended_stopwords = ["said", "say", "mr", "would", "ve", "just", "yes", "no", "don"]
             stops = stopwords.words(language)
             stops.extend(extended_stopwords)
             stops = set(stops)

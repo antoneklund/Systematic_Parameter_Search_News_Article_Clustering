@@ -7,8 +7,10 @@ import numpy as np
 
 sys.path.append(os.getcwd())  # noqa
 
+import hdbscan
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import seaborn as sns
 from dimensionality_reduction.cluster import (
     SNACK_HDBSCAN_SETTINGS,
@@ -22,6 +24,7 @@ from dimensionality_reduction.cluster import (
     normalize_l2,
 )
 from dimensionality_reduction.dim_red import reduce_pca, reduce_umap
+from interactive_core import add_tfidf_keywords_to_df, create_topics_df
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -32,9 +35,9 @@ HDBSCAN_SETTING_POSITION = 2
 px = 1 / plt.rcParams["figure.dpi"]  # pixel in inches
 
 
-def plot_2D(df, vectors, labels=None, dataset_identifier="", plot_title="", crop=None):
+def plot_2D(df, vectors, labels=None, dataset_identifier="", topics=None, plot_title="", crop=None):
     plot_df = create_plot_dataframe_depending_on_labels(df, labels)
-    plot_df = convert_numeric_labels_to_strings(plot_df, dataset_identifier)
+    plot_df = convert_numeric_labels_to_strings(plot_df, dataset_identifier, topics)
     x_axis, y_axis = split_into_x_and_y_axes(vectors)
     plot_df = create_and_add_x_y_columns_to_dataframe(x_axis, y_axis, plot_df)
     if crop != None:
@@ -57,8 +60,13 @@ def create_plot_dataframe_depending_on_labels(df, labels):
     return plot_df
 
 
-def convert_numeric_labels_to_strings(plot_df, dataset_identifier):
-    if dataset_identifier == "SNACK":
+def convert_numeric_labels_to_strings(plot_df, dataset_identifier, topics):
+    if dataset_identifier == "topics":
+        for i, row in topics.iterrows():
+            print(row.topic_id)
+            print(row.keywords)
+            plot_df.loc[plot_df["label"] == row.topic_id, "label_string"] = str(row.keywords)
+    elif dataset_identifier == "SNACK":
         plot_df.loc[plot_df["label"] == 0, "label_string"] = "TECHNOLOGY"
         plot_df.loc[plot_df["label"] == 1, "label_string"] = "FOOD & DRINK"
         plot_df.loc[plot_df["label"] == 2, "label_string"] = "SPORTS"
@@ -124,22 +132,27 @@ def plot_scatterplot_with_colored_labels_from_dataframe(plot_df, plot_title):
         alpha=0.5,
         s=5,
         legend="full",
-        hue_order=[
-            "MARKETS BONDS",
-            "SOCCER ENGLAND",
-            "NATURAL DISASTER",
-            "AUTO",
-            "FILM",
-            "ENVIRONMENT",
-            "USA POLITICS",
-        ],
+        # hue_order=[
+        #     "MARKETS BONDS",
+        #     "SOCCER ENGLAND",
+        #     "NATURAL DISASTER",
+        #     "AUTO",
+        #     "FILM",
+        #     "ENVIRONMENT",
+        #     "USA POLITICS",
+        # ],
     )
+    fm.fontManager.addfont("/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc")
+    font_name = 'Noto Serif CJK JP'
+    plt.rcParams['font.family'] = [font_name]
+    # plt.rcParams['font.serif']=['Times New Roman']
+    plt.rcParams['axes.unicode_minus'] = False
     plt.legend(
         loc="upper center",
         bbox_to_anchor=(0.5, 0),
         fancybox=True,
         shadow=True,
-        ncol=3,
+        ncol=1,
     )
     plt.title(plot_title)
     scatterplot.set(xticklabels=[])
@@ -1027,17 +1040,28 @@ doc2vec_snack.pkl
 
 """
 
-
 def main():
     # PLOT 2D
-    # corpus_df = pd.read_pickle("dim_vectors/doc2vec_reuters.pkl")
-    # doc_vec = corpus_df["doc_vec"].to_list()
+    corpus_df = pd.read_pickle("dim_vectors/persian_wiki_vectors.pkl")
+    # corpus_df = corpus_df.sample(1000)
+    doc_vec = corpus_df["doc_vec"].to_list()
 
-    # # vectors = reduce_umap(doc_vec, 2, 20)
+    vectors = reduce_umap(doc_vec, 2, 20)
     # vectors = reduce_pca(doc_vec, 2)
 
-    # plot_2D(corpus_df, vectors, labels=corpus_df["label"].to_list(), dataset_identifier="REUTERS", plot_title="REUTERS Doc2Vec PCA", crop=[2, -2, 2, -2])
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=15)
+    clusterer.fit(vectors)
+    labels = clusterer.labels_
+    corpus_df["label"] = labels
 
+    topics_df = create_topics_df(corpus_df)
+    topics_df = add_tfidf_keywords_to_df(topics_df)
+    print(topics_df["keywords"])
+    print(topics_df["topic_id"])
+
+    plot_2D(corpus_df, vectors, labels=labels, dataset_identifier="topics", topics=topics_df, plot_title="Persian wiki", crop=None)
+
+# corpus_df["label"].to_list()
     # SNACK BERT UMAP [20, 2, 15, -15]
     # SNACK Doc2Vec UMAP [5, -5, 15, -10]
     # AG BERT UMAP [12, -20, 30, -20]
