@@ -14,63 +14,6 @@ import pandas as pd
 
 PATH = os.getcwd() + "/models/bert.torch"
 
-
-def small_bert_inference(corpus_df, save_path="dim_vectors/small_bert_trained.pkl"):
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    model = AutoModel.from_pretrained(
-        "google/bert_uncased_L-4_H-512_A-8", output_hidden_states=True
-    )
-    model.eval()
-
-    corpus_df["doc_vec"] = None
-    for i, row in corpus_df.iterrows():
-        inputs = tokenizer(
-            row["text"],
-            return_tensors="pt",
-            max_length=512,
-            truncation=True,
-            padding="max_length",
-        )
-        outputs = model(**inputs)
-        output_avg = outputs.hidden_states[1:-1][0][0].detach().numpy()
-        # print(output_avg.shape)
-        corpus_df["doc_vec"].iloc[i] = output_avg.mean(axis=0)
-        print(corpus_df.iloc[i])
-
-    print(corpus_df)
-    corpus_df.to_pickle(save_path)
-
-
-def trained_bert_inference(
-    corpus_df, model_path=PATH, save_path="dim_vectors/bert_trained.pkl"
-):
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    model = BertForMaskedLM.from_pretrained(
-        "bert-base-uncased", output_hidden_states=True
-    )
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
-
-    corpus_df["doc_vec"] = None
-    for i, row in corpus_df.iterrows():
-        inputs = tokenizer(
-            row["text"],
-            return_tensors="pt",
-            max_length=512,
-            truncation=True,
-            padding="max_length",
-        )
-        outputs = model(**inputs)
-        output_avg = outputs.hidden_states[-1][0].detach().numpy()
-        output_avg = output_avg[1:]
-        # print(output_avg)
-        corpus_df["doc_vec"].iloc[i] = output_avg.mean(axis=0)
-        print(corpus_df.iloc[i])
-
-    print(corpus_df)
-    corpus_df.to_pickle(save_path)
-
-
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[
         0
